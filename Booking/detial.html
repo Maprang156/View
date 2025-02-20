@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>รายละเอียดห้องประชุม</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;700&display=swap');
+        * {
+            font-family: 'Noto Sans Thai', sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #E8F8FF;
+            color: #333;
+        }
+        header {
+            background-color: #A0D2EB;
+            color: white;
+            text-align: center;
+            padding: 1.5rem;
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.1);
+        }
+        .room {
+            margin-bottom: 2rem;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 2rem;
+        }
+        .room:last-child {
+            border-bottom: none;
+        }
+        .room img {
+            width: 100%;
+            height: auto;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+        }
+        .room h2 {
+            font-size: 1.8rem;
+            color: #333;
+            margin-bottom: 1rem;
+        }
+        .room p {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 0.5rem;
+        }
+        .room ul {
+            margin-top: 1rem;
+        }
+        .room ul li {
+            font-size: 1rem;
+            color: #333;
+        }
+        .back-btn {
+            display: inline-block;
+            margin-top: 2rem;
+            padding: 0.8rem 1.5rem;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            font-size: 1rem;
+            border-radius: 6px;
+            transition: background-color 0.3s ease-in-out;
+        }
+        .back-btn:hover {
+            background-color: #45A049;
+        }
+        nav {
+            background-color: #A0D2EB;
+            color: white;
+            padding: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        nav ul {
+            display: flex;
+            list-style: none;
+            justify-content: space-between;
+            align-items: center;
+            margin: 0;
+            padding: 0;
+        }
+        nav ul li {
+            margin: 0 1rem;
+        }
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            font-size: 1.2rem;
+            transition: color 0.3s;
+        }
+        nav ul li a:hover {
+            color: #FFD700;
+        }
+        .language-switcher select {
+            padding: 0.5rem;
+            border-radius: 6px;
+            border: none;
+            font-size: 1rem;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <header>รายละเอียดห้องประชุม</header>
+    <nav>
+        <ul>
+            <li><a href="List.html">หน้าหลัก</a></li>
+            <li><a href="index.html">จองห้องประชุม</a></li>
+            <li><a href="detial.html">รายละเอียดห้องประชุม</a></li>
+        </ul>
+    </nav>
+    <div id="app" class="container">
+        <div class="room" v-for="room in rooms" :key="room.id">
+            <img :src="room.image" :alt="room.translations[language].name">
+            <h2>{{ room.translations[language].name }}</h2>
+            <p>{{ room.translations[language].description }}</p>
+            <h3>{{ translations.equipment }}</h3>
+            <ul>
+                <li v-for="equipment in room.equipment" :key="equipment">{{ equipment }}</li>
+            </ul>
+        </div>
+        <a href="index.html" class="back-btn">{{ translations.back }}จองห้องประชุม</a>
+    </div>
+
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    language: 'th',
+                    translations: {
+                        th: { equipment: 'อุปกรณ์ที่มีให้', back: 'กลับสู่รายการห้องประชุม' },
+                        en: { equipment: 'Available Equipment', back: 'Back to Room List' },
+                        zh: { equipment: '可用设备', back: '返回房间列表' }
+                    },
+                    rooms: [
+                        {
+                            id: 1,
+                            image: '1.jpg',
+                            translations: {
+                                th: { name: 'ห้องประชุม 1', description: 'ห้องประชุมขนาดใหญ่ พร้อมสิ่งอำนวยความสะดวกครบครัน' },
+                                en: { name: 'Meeting Room 1', description: 'Large meeting room with full facilities' },
+                                zh: { name: '会议室 1', description: '配备完善设施的大型会议室' }
+                            },
+                            equipment: ['ไมโครโฟน', 'โปรเจ็กเตอร์', 'กระดานไวท์บอร์ด']
+                        },
+                        {
+                            id: 2,
+                            image: '4.jpg',
+                            translations: {
+                                th: { name: 'ห้องประชุม 2', description: 'ห้องประชุมพร้อม Video Conference' },
+                                en: { name: 'Meeting Room 2', description: 'Meeting room with Video Conference' },
+                                zh: { name: '会议室 2', description: '配备视频会议的会议室' }
+                            },
+                            equipment: ['จอภาพ', 'กล้องวีดีโอ', 'ไมค์ไร้สาย']
+                        }
+                    ]
+                };
+            },
+            methods: {
+                changeLanguage() {
+                    console.log('Language changed to:', this.language);
+                }
+            },
+            mounted() {
+                this.changeLanguage();
+            }
+        });
+
+        app.mount('#app');
+    </script>
+</body>
+</html>

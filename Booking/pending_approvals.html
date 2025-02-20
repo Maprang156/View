@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>รายการจองห้องประชุม</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+                @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;700&display=swap');
+        * {
+            font-family: 'Noto Sans Thai', sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Noto Sans Thai', sans-serif;
+            background: #E8F8FF; /* พื้นหลังโทนฟ้าพาสเทล */
+            color: #333;
+            padding: 2rem;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 1rem;
+            font-size: 2.5rem;
+            color: white;
+            background-color: #A0D2EB; /* สีฟ้าพาสเทล */
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .language-switcher {
+            text-align: right;
+            margin-bottom: 1rem;
+        }
+        .language-switcher select {
+            padding: 0.5rem;
+            font-size: 1rem;
+            border-radius: 6px;
+            border: 1px solid #A0D2EB;
+            background-color: #F9FCFF;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border: 1px solid #D6E9F5; /* เส้นขอบ */
+        }
+        th {
+            background: #A0D2EB; /* สีฟ้าพาสเทล */
+            color: white;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #F9FCFF; /* แถวคู่ */
+        }
+        tr:hover {
+            background-color: #D6E9F5; /* สีเมื่อชี้เมาส์ */
+        }
+        button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
+        .approve {
+            background-color: #4CAF50; /* สีเขียว */
+            color: white;
+        }
+        .approve:hover {
+            background-color: #45A049;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+        .reject {
+            background-color: #FF5733; /* สีแดง */
+            color: white;
+        }
+        .reject:hover {
+            background-color: #C70039;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <header>รายการห้องประชุม</header>
+    <div id="app">
+        <div class="language-switcher">
+            <label>
+                {{ translations.language }}:
+                <select v-model="selectedLanguage" @change="changeLanguage">
+                    <option value="th">ไทย</option>
+                    <option value="en">English</option>
+                    <option value="zh">中文</option>
+                </select>
+            </label>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>{{ translations.room }}</th>
+                    <th>{{ translations.title }}</th>
+                    <th>{{ translations.date }}</th>
+                    <th>{{ translations.time }}</th>
+                    <th>{{ translations.equipment }}</th>
+                    <th>{{ translations.actions }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="booking in pendingBookings" :key="booking.id">
+                    <td>{{ booking.room_name }}</td>
+                    <td>{{ booking.title }}</td>
+                    <td>{{ booking.booking_date }}</td>
+                    <td>{{ booking.start_time }} - {{ booking.end_time }}</td>
+                    <td>{{ formatEquipment(booking.equipment) }}</td>
+                    <td>
+                        <button class="approve" @click="approveBooking(booking.id)">{{ translations.approve }}</button>
+                        <button class="reject" @click="rejectBooking(booking.id)">{{ translations.reject }}</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    selectedLanguage: 'th',
+                    translations: {},
+                    pendingBookings: []
+                };
+            },
+            methods: {
+                changeLanguage() {
+                    const languages = {
+                        th: {
+                            header: 'รายการจองที่รอการอนุมัติ',
+                            language: 'เลือกภาษา',
+                            room: 'ห้องประชุม',
+                            title: 'หัวข้อ',
+                            date: 'วันที่',
+                            time: 'เวลา',
+                            equipment: 'อุปกรณ์',
+                            actions: 'การดำเนินการ',
+                            approve: 'อนุมัติ',
+                            reject: 'ลบ'
+                        },
+                        en: {
+                            header: 'Pending Booking Approvals',
+                            language: 'Select Language',
+                            room: 'Room',
+                            title: 'Title',
+                            date: 'Date',
+                            time: 'Time',
+                            equipment: 'Equipment',
+                            actions: 'Actions',
+                            approve: 'Approve',
+                            reject: 'Reject'
+                        },
+                        zh: {
+                            header: '待批准的预订',
+                            language: '选择语言',
+                            room: '会议室',
+                            title: '标题',
+                            date: '日期',
+                            time: '时间',
+                            equipment: '设备',
+                            actions: '操作',
+                            approve: '批准',
+                            reject: '删除'
+                        }
+                    };
+
+                    this.translations = languages[this.selectedLanguage];
+                },
+                fetchPendingBookings() {
+                    axios.get('get_pending_bookings.php').then(response => {
+                        this.pendingBookings = response.data;
+                    }).catch(error => {
+                        console.error('Error fetching pending bookings:', error);
+                    });
+                },
+                approveBooking(id) {
+                    axios.post('approve_booking.php', { id }).then(() => {
+                        alert(this.translations.approve + ' สำเร็จ!');
+                        this.fetchPendingBookings();
+                    }).catch(error => {
+                        console.error('Error approving booking:', error);
+                    });
+                },
+                rejectBooking(id) {
+                    axios.post('reject_booking.php', { id }).then(() => {
+                        alert(this.translations.reject + ' สำเร็จ!');
+                        this.fetchPendingBookings();
+                    }).catch(error => {
+                        console.error('Error rejecting booking:', error);
+                    });
+                },
+                formatEquipment(equipment) {
+                    if (!equipment) return '-';
+                    return equipment.split(',').join(', ');
+                }
+            },
+            mounted() {
+                this.changeLanguage();
+                this.fetchPendingBookings();
+            }
+        });
+
+        app.mount('#app');
+    </script>
+</body>
+</html>

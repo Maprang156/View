@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Booking ระบบจองห้องประชุม</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@100..900&display=swap');
+        *{
+            font-family: "Noto Sans Thai", sans-serif;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            background: url('https://via.placeholder.com/1920x1080') no-repeat center center fixed;
+            background-size: cover;
+            color: #333;
+        }
+        header {
+            background-color: #a0d2eb;
+            color: white;
+            text-align: center;
+            padding: 1.5rem 1rem;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.9);
+            margin: 2rem auto;
+            padding: 2rem;
+            border-radius: 12px;
+            max-width: 1200px;
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.1);
+        }
+        .filters {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+        .filters select, .filters input, .filters button {
+            padding: 0.8rem;
+            font-size: 1rem;
+            border: 1px solid #a0d2eb;
+            border-radius: 6px;
+        }
+        .filters button {
+            background-color: #a0d2eb;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+        .filters button:hover {
+            background-color: #88c9e3;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 1rem;
+            text-align: left;
+        }
+        th {
+            background-color: #a0d2eb;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr:hover {
+            background-color: #f1f7fc;
+        }
+        .status {
+            font-weight: bold;
+            color: #ff9800;
+        }
+        .actions button {
+            padding: 0.5rem 1rem;
+            background-color: #88c9e3;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+        .actions button:hover {
+            background-color: #6bb1d6;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        รายการจองห้องประชุม
+    </header>
+    <div id="app" class="container">
+        <div class="filters">
+            <label>
+                {{ translations.language }}:
+                <select v-model="language" @change="changeLanguage">
+                    <option value="th">ไทย</option>
+                    <option value="en">English</option>
+                    <option value="zh">中文</option>
+                </select>
+            </label>
+        </div>
+
+        <h2>{{ translations.bookingList }}</h2>
+        <div class="filters">
+            <label>
+                {{ translations.show }}:
+                <select v-model="filter.limit">
+                    <option value="10">10 {{ translations.items }}</option>
+                    <option value="20">20 {{ translations.items }}</option>
+                    <option value="30">30 {{ translations.items }}</option>
+                </select>
+            </label>
+            <label>
+                {{ translations.date }}:
+                <input type="date" v-model="filter.date">
+            </label>
+            <label>
+                {{ translations.room }}:
+                <select v-model="filter.room">
+                    <option value="all">{{ translations.all }}</option>
+                    <option value="Room 1">{{ translations.room1 }}</option>
+                    <option value="Room 2">{{ translations.room2 }}</option>
+                </select>
+            </label>
+            <label>
+                {{ translations.purpose }}:
+                <select v-model="filter.purpose">
+                    <option value="all">{{ translations.all }}</option>
+                    <option value="meeting">{{ translations.meeting }}</option>
+                    <option value="training">{{ translations.training }}</option>
+                </select>
+            </label>
+            <label>
+                {{ translations.status }}:
+                <select v-model="filter.status">
+                    <option value="all">{{ translations.all }}</option>
+                    <option value="pending">{{ translations.pending }}</option>
+                    <option value="approved">{{ translations.approved }}</option>
+                </select>
+            </label>
+            <button @click="applyFilters">{{ translations.go }}</button>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>{{ translations.titleColumn }}</th>
+                    <th>{{ translations.roomColumn }}</th>
+                    <th>{{ translations.nameColumn }}</th>
+                    <th>{{ translations.createdAtColumn }}</th>
+                    <th>{{ translations.reasonColumn }}</th>
+                    <th>{{ translations.statusColumn }}</th>
+                    <th>{{ translations.actionsColumn }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="booking in filteredBookings" :key="booking.id">
+                    <td>{{ booking.title }}</td>
+                    <td>{{ booking.room }}</td>
+                    <td>{{ booking.name }}</td>
+                    <td>{{ booking.createdAt }}</td>
+                    <td>{{ booking.reason }}</td>
+                    <td class="status">{{ booking.status }}</td>
+                    <td class="actions">
+                        <button @click="approveBooking(booking.id)">{{ translations.approve }}</button>
+                        <button @click="rejectBooking(booking.id)">{{ translations.reject }}</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    language: 'th',
+                    translations: {},
+                    filter: {
+                        limit: 10,
+                        date: '',
+                        room: 'all',
+                        purpose: 'all',
+                        status: 'all'
+                    },
+                    bookings: [
+                        {
+                            id: 1,
+                            title: '123-598',
+                            room: 'Room 1',
+                            name: 'Tanwa Jeh-awae',
+                            createdAt: '04/03/2024 13:24',
+                            reason: '-',
+                            status: 'Pending'
+                        },
+                        {
+                            id: 2,
+                            title: '320-568 testing',
+                            room: 'Room 1',
+                            name: 'Tanwa Jeh-awae',
+                            createdAt: '04/03/2024 13:21',
+                            reason: '-',
+                            status: 'Pending'
+                        },
+                        {
+                            id: 3,
+                            title: 'ณัฐธิดา ทดสอบ',
+                            room: 'Room 2',
+                            name: 'Natthida Sipaya',
+                            createdAt: '03/03/2024 22:16',
+                            reason: '-',
+                            status: 'Pending'
+                        }
+                    ]
+                };
+            },
+            computed: {
+                filteredBookings() {
+                    return this.bookings.filter(booking => {
+                        return (this.filter.room === 'all' || booking.room === this.filter.room) &&
+                               (this.filter.status === 'all' || booking.status.toLowerCase() === this.filter.status);
+                    });
+                }
+            },
+            methods: {
+                changeLanguage() {
+                    const translations = {
+                        th: {
+                            title: 'E-Booking ระบบจองห้องประชุม',
+                            language: 'เลือกภาษา',
+                            bookingList: 'รายการจองห้องประชุม',
+                            show: 'แสดง',
+                            items: 'รายการ',
+                            date: 'วันที่',
+                            room: 'ห้องประชุม',
+                            all: 'ทั้งหมด',
+                            room1: 'ห้องประชุม 1',
+                            room2: 'ห้องประชุม 2',
+                            purpose: 'ใช้สำหรับ',
+                            meeting: 'ประชุม',
+                            training: 'อบรม',
+                            status: 'สถานะ',
+                            pending: 'รอตรวจสอบ',
+                            approved: 'อนุมัติแล้ว',
+                            go: 'ไป',
+                            titleColumn: 'หัวข้อ',
+                            roomColumn: 'ชื่อห้อง',
+                            nameColumn: 'ชื่อผู้จอง',
+                            createdAtColumn: 'สร้างเมื่อ',
+                            reasonColumn: 'เหตุผล',
+                            statusColumn: 'สถานะ',
+                            actionsColumn: 'การดำเนินการ',
+                            approve: 'อนุมัติ',
+                            reject: 'ลบ'
+                        },
+                        en: {
+                            title: 'E-Booking Meeting Room Reservation',
+                            language: 'Select Language',
+                            bookingList: 'Booking List',
+                            show: 'Show',
+                            items: 'items',
+                            date: 'Date',
+                            room: 'Room',
+                            all: 'All',
+                            room1: 'Room 1',
+                            room2: 'Room 2',
+                            purpose: 'Purpose',
+                            meeting: 'Meeting',
+                            training: 'Training',
+                            status: 'Status',
+                            pending: 'Pending',
+                            approved: 'Approved',
+                            go: 'Go',
+                            titleColumn: 'Title',
+                            roomColumn: 'Room',
+                            nameColumn: 'Booked By',
+                            createdAtColumn: 'Created At',
+                            reasonColumn: 'Reason',
+                            statusColumn: 'Status',
+                            actionsColumn: 'Actions',
+                            approve: 'Approve',
+                            reject: 'Reject'
+                        },
+                        zh: {
+                            title: 'E-Booking 会议室预订',
+                            language: '选择语言',
+                            bookingList: '预订列表',
+                            show: '显示',
+                            items: '项目',
+                            date: '日期',
+                            room: '房间',
+                            all: '所有',
+                            room1: '房间 1',
+                            room2: '房间 2',
+                            purpose: '用途',
+                            meeting: '会议',
+                            training: '培训',
+                            status: '状态',
+                            pending: '待审核',
+                            approved: '已批准',
+                            go: '去',
+                            titleColumn: '标题',
+                            roomColumn: '房间',
+                            nameColumn: '预订者',
+                            createdAtColumn: '创建于',
+                            reasonColumn: '原因',
+                            statusColumn: '状态',
+                            actionsColumn: '操作',
+                            approve: '批准',
+                            reject: '删除'
+                        }
+                    };
+
+                    this.translations = translations[this.language];
+                },
+                applyFilters() {
+                    console.log('Filters applied:', this.filter);
+                },
+                approveBooking(id) {
+                    const booking = this.bookings.find(b => b.id === id);
+                    if (booking) {
+                        booking.status = this.translations.approved;
+                        alert(`${this.translations.approve} Booking ID: ${id}`);
+                    }
+                },
+                rejectBooking(id) {
+                    this.bookings = this.bookings.filter(b => b.id !== id);
+                    alert(`${this.translations.reject} Booking ID: ${id}`);
+                }
+            },
+            mounted() {
+                this.changeLanguage();
+            }
+        });
+
+        app.mount('#app');
+    </script>
+</body>
+</html>

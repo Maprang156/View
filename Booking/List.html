@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>รายการห้องประชุม</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;700&display=swap');
+        * {
+            font-family: 'Noto Sans Thai', sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: url('https://via.placeholder.com/1920x1080') no-repeat center center fixed;
+            background-size: cover;
+            color: #333;
+        }
+        header {
+            background-color: #A0D2EB;
+            color: white;
+            text-align: center;
+            padding: 1.5rem;
+            font-size: 2rem;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.1);
+        }
+        .filters {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .filters select, .filters button {
+            padding: 0.8rem;
+            font-size: 1rem;
+            border-radius: 6px;
+            border: 1px solid #A0D2EB;
+        }
+        .filters button {
+            background-color: #f44336;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .filters button:hover {
+            background-color: #e53935;
+        }
+        .room-list {
+            margin-top: 1.5rem;
+        }
+        .room-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .room-item img {
+            width: 120px;
+            height: 90px;
+            border-radius: 6px;
+            object-fit: cover;
+        }
+        .room-details {
+            flex: 1;
+            margin-left: 1rem;
+        }
+        .room-details h3 {
+            margin-bottom: 0.5rem;
+            font-size: 1.5rem;
+            color: #333;
+        }
+        .room-details p {
+            color: #666;
+            font-size: 1rem;
+        }
+        .room-actions button {
+            margin-left: 0.5rem;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: opacity 0.3s;
+        }
+        .room-actions .book-btn {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .room-actions .details-btn {
+            background-color: #FF9800;
+            color: white;
+        }
+        .room-actions button:hover {
+            opacity: 0.8;
+        }
+        nav {
+            background-color: #A0D2EB;
+            color: white;
+            padding: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        nav ul {
+            display: flex;
+            list-style: none;
+            justify-content: space-between;
+            align-items: center;
+            margin: 0;
+            padding: 0;
+        }
+        nav ul li {
+            margin: 0 1rem;
+        }
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            font-size: 1.2rem;
+            transition: color 0.3s;
+        }
+        nav ul li a:hover {
+            color: #FFD700;
+        }
+        .language-switcher select {
+            padding: 0.5rem;
+            border-radius: 6px;
+            border: none;
+            font-size: 1rem;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <header>รายการห้องประชุม</header>
+    <nav>
+        <ul>
+            <li><a href="List.html">หน้าหลัก</a></li>
+            <li><a href="index.html">จองห้องประชุม</a></li>
+            <li><a href="detial.html">รายละเอียดห้องประชุม</a></li>
+        </ul>
+    </nav>
+    <div id="app" class="container">
+        <div class="filters">
+            <label>
+                {{ translations.language }}:
+                <select v-model="language" @change="changeLanguage">
+                    <option value="th">ไทย</option>
+                    <option value="en">English</option>
+                    <option value="zh">中文</option>
+                </select>
+            </label>
+            <label>
+                {{ translations.show }}:
+                <select v-model="filter.limit">
+                    <option value="10">10 {{ translations.items }}</option>
+                    <option value="20">20 {{ translations.items }}</option>
+                    <option value="30">30 {{ translations.items }}</option>
+                </select>
+            </label>
+            <button @click="applyFilters">{{ translations.go }}</button>
+        </div>
+
+        <div class="room-list">
+            <div class="room-item" v-for="room in rooms" :key="room.id">
+                <img :src="room.image" alt="room.name">
+                <div class="room-details">
+                    <h3>{{ room.translations[language].name }}</h3>
+                    <p>{{ room.translations[language].description }}</p>
+                </div>
+                <div class="room-actions">
+                    <button class="book-btn" @click="bookRoom(room.id)">{{ translations.book }}</button>
+                    <button class="details-btn" @click="goToDetails(room.id)">{{ translations.details }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    language: 'th',
+                    translations: {},
+                    filter: {
+                        limit: 10
+                    },
+                    rooms: [
+                        {
+                            id: 1,
+                            translations: {
+                                th: {
+                                    name: 'ห้องประชุม 1',
+                                    description: 'ห้องประชุมขนาดใหญ่ พร้อมสิ่งอำนวยความสะดวกครบครัน'
+                                },
+                                en: {
+                                    name: 'Meeting Room 1',
+                                    description: 'Large meeting room with full facilities'
+                                },
+                                zh: {
+                                    name: '会议室 1',
+                                    description: '配备完善设施的大型会议室'
+                                }
+                            },
+                            image: '1.jpg'
+                        },
+                        {
+                            id: 2,
+                            translations: {
+                                th: {
+                                    name: 'ห้องประชุม 2',
+                                    description: 'ห้องประชุมพร้อมระบบ Video conference ที่นั่งรูปตัว U 2 แถว'
+                                },
+                                en: {
+                                    name: 'Meeting Room 2',
+                                    description: 'Meeting room with video conferencing, U-shape seating, 2 rows'
+                                },
+                                zh: {
+                                    name: '会议室 2',
+                                    description: '带视频会议系统的会议室，U 型座位，2 排'
+                                }
+                            },
+                            image: '4.jpg'
+                        },
+                        
+                    ]
+                };
+            },
+            methods: {
+                applyFilters() {
+                    console.log('Filters applied with limit:', this.filter.limit);
+                },
+                changeLanguage() {
+                    const translations = {
+                        th: {
+                            language: 'เลือกภาษา',
+                            show: 'แสดง',
+                            items: 'รายการ',
+                            go: 'ไป',
+                            book: 'จองห้องประชุม',
+                            details: 'รายละเอียด'
+                        },
+                        en: {
+                            language: 'Select Language',
+                            show: 'Show',
+                            items: 'items',
+                            go: 'Go',
+                            book: 'Book Room',
+                            details: 'Details'
+                        },
+                        zh: {
+                            language: '选择语言',
+                            show: '显示',
+                            items: '项目',
+                            go: '去',
+                            book: '预订房间',
+                            details: '详情'
+                        }
+                    };
+
+                    this.translations = translations[this.language];
+                },
+                bookRoom(roomId) {
+                    window.location.href = `index.html?roomId=${roomId}`;
+                },
+                goToDetails(roomId) {
+                    window.location.href = `detial.html?roomId=${roomId}`;
+                }
+            },
+            mounted() {
+                this.changeLanguage();
+            }
+        });
+
+        app.mount('#app');
+    </script>
+</body>
+</html>

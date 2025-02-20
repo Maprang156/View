@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Booking ระบบจองห้องประชุม</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;700&display=swap');
+        * {
+            font-family: 'Noto Sans Thai', sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background-color: #E8F8FF; /* สีพื้นหลังโทนฟ้าพาสเทล */
+            color: #333;
+        }
+        header {
+            background-color: #A0D2EB; /* สีฟ้าพาสเทล */
+            color: white;
+            text-align: center;
+            padding: 1.5rem;
+            font-size: 2rem;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: #FFFFFF; /* พื้นหลังสีขาว */
+            border-radius: 12px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+        .calendar-controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .calendar-controls select {
+            padding: 0.5rem;
+            font-size: 1rem;
+            border-radius: 6px;
+            border: 1px solid #A0D2EB;
+            background-color: #F9FCFF;
+        }
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        .calendar-header {
+            text-align: center;
+            font-weight: bold;
+            color: #333;
+            background-color: #A0D2EB; /* หัวข้อปฏิทิน */
+            padding: 0.5rem;
+            border-radius: 6px;
+        }
+        .calendar-day {
+            text-align: center;
+            padding: 1rem;
+            border: 1px solid #D6E9F5; /* เส้นขอบ */
+            border-radius: 6px;
+            background: #F9FCFF; /* สีพื้นหลัง */
+        }
+        .available {
+            background-color: #A0D2EB;
+            color: white;
+            cursor: pointer;
+        }
+        .unavailable {
+            background-color: #FFCDD2;
+            color: white;
+            cursor: not-allowed;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        label {
+            font-size: 1rem;
+            font-weight: bold;
+        }
+        input, select, textarea, button {
+            padding: 0.8rem;
+            font-size: 1rem;
+            border-radius: 8px;
+            border: 1px solid #A0D2EB;
+            width: 100%;
+            background-color: #FFFFFF;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #74B9E3; /* สีฟ้าเข้ม */
+            box-shadow: 0 0 5px rgba(116, 185, 227, 0.5);
+        }
+        button {
+            background-color: #5BBFBA; /* ปุ่มโทนสีเขียวพาสเทล */
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease-in-out;
+        }
+        button:hover {
+            background-color: #49A89E;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+        .message {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .message.success {
+            background-color: #DFF2BF;
+            color: #4F8A10;
+        }
+        .message.error {
+            background-color: #FFBABA;
+            color: #D8000C;
+        }
+        .navigation {
+            margin-top: 2rem;
+            text-align: center;
+        }
+        .navigation button {
+            padding: 0.8rem 1.5rem;
+            font-size: 1rem;
+            margin: 0.5rem;
+            border-radius: 8px;
+        }
+        nav {
+            background-color: #A0D2EB;
+            color: white;
+            padding: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        nav ul {
+            display: flex;
+            list-style: none;
+            justify-content: space-between;
+            align-items: center;
+            margin: 0;
+            padding: 0;
+        }
+        nav ul li {
+            margin: 0 1rem;
+        }
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            font-size: 1.2rem;
+            transition: color 0.3s;
+        }
+        nav ul li a:hover {
+            color: #FFD700;
+        }
+        .language-switcher select {
+            padding: 0.5rem;
+            border-radius: 6px;
+            border: none;
+            font-size: 1rem;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <header>E-Booking ระบบจองห้องประชุม</header>
+    <nav>
+        <ul>
+            <li><a href="List.html">หน้าหลัก</a></li>
+            <li><a href="index.html">จองห้องประชุม</a></li>
+            <li><a href="detial.html">รายละเอียดห้องประชุม</a></li>
+        </ul>
+    </nav>
+    <div id="app" class="container">
+        <div class="language-switcher">
+            <label>{{ translations.language }}:
+                <select v-model="selectedLanguage" @change="changeLanguage">
+                    <option value="th">ไทย</option>
+                    <option value="en">English</option>
+                    <option value="zh">中文</option>
+                </select>
+            </label>
+        </div>
+        <br>
+        <div class="calendar-controls">
+            <select v-model="selectedMonth" @change="updateCalendar">
+                <option v-for="(month, index) in translations.months" :value="index">{{ month }}</option>
+            </select>
+            <select v-model="selectedYear" @change="updateCalendar">
+                <option v-for="year in years" :value="year">{{ year }}</option>
+            </select>
+        </div>
+
+        <div class="calendar">
+            <div class="calendar-header" v-for="day in translations.days" :key="day">{{ day }}</div>
+            <div
+                v-for="(status, index) in calendarDays"
+                :key="index"
+                :class="['calendar-day', status]"
+            >
+                {{ index + 1 }}
+            </div>
+        </div>
+
+        <form @submit.prevent="addBooking">
+            <label for="room">{{ translations.selectRoom }}:</label>
+            <select id="room" v-model="form.room" required>
+                <option v-for="room in rooms" :value="room.id" :key="room.id">{{ room.name }}</option>
+            </select>
+        
+            <label for="title">{{ translations.title }}:</label>
+            <input id="title" type="text" v-model="form.title" required />
+        
+            <label for="date">{{ translations.date }}:</label>
+            <input id="date" type="date" v-model="form.date" required />
+        
+            <label for="startTime">{{ translations.startTime }}:</label>
+            <input id="startTime" type="time" v-model="form.startTime" required />
+        
+            <label for="endTime">{{ translations.endTime }}:</label>
+            <input id="endTime" type="time" v-model="form.endTime" required />
+        
+            <label for="equipment">{{ translations.equipment }}:</label>
+            <select id="equipment" v-model="form.selectedEquipment" multiple>
+                <option v-for="equipment in availableEquipment" :value="equipment.name" :key="equipment.id">
+                    {{ equipment.name }}
+                </option>
+            </select>
+        
+            <button type="submit">{{ translations.submit }}</button>
+        </form>
+        
+
+        <div v-if="message" :class="['message', messageType]">
+            {{ message }}
+        </div>
+
+        <div class="navigation">
+            <button @click="goToPendingApprovals">{{ translations.pendingApprovals }}</button>
+        </div>
+    </div>
+
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    selectedLanguage: 'th',
+                    translations: {},
+                    rooms: [
+                        { id: 1, name: 'ห้องประชุม 1' },
+                        { id: 2, name: 'ห้องประชุม 2' }
+                    ],
+                    availableEquipment: [
+                        { id: 1, name: 'ไมโครโฟน' },
+                        { id: 2, name: 'โปรเจ็กเตอร์' },
+                        { id: 3, name: 'กระดานไวท์บอร์ด' }
+                    ],
+                    form: {
+                        room: '',
+                        title: '',
+                        date: '',
+                        startTime: '',
+                        endTime: '',
+                        equipment: []
+                    },
+                    calendarDays: [],
+                    bookings: [],
+                    selectedMonth: new Date().getMonth(),
+                    selectedYear: new Date().getFullYear(),
+                    years: Array.from({ length: 11 }, (_, i) => new Date().getFullYear() - 5 + i),
+                    message: '',
+                    messageType: ''
+                };
+            },
+            methods: {
+                changeLanguage() {
+                    const languages = {
+                        th: {
+                            header: 'E-Booking ระบบจองห้องประชุม',
+                            language: 'เลือกภาษา',
+                            selectRoom: 'เลือกห้องประชุม',
+                            title: 'หัวข้อการจอง',
+                            date: 'วันที่จอง',
+                            startTime: 'เวลาเริ่มต้น',
+                            endTime: 'เวลาสิ้นสุด',
+                            equipment: 'อุปกรณ์ที่ต้องการ',
+                            submit: 'บันทึกการจอง',
+                            pendingApprovals: 'ดูรายการจองที่รอการอนุมัติ',
+                            days: ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'],
+                            months: ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม']
+                        },
+                        en: {
+                            header: 'E-Booking Meeting Room Reservation',
+                            language: 'Select Language',
+                            selectRoom: 'Select Room',
+                            title: 'Booking Title',
+                            date: 'Booking Date',
+                            startTime: 'Start Time',
+                            endTime: 'End Time',
+                            equipment: 'Required Equipment',
+                            submit: 'Submit Booking',
+                            pendingApprovals: 'View Pending Approvals',
+                            days: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+                            months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+                        },
+                        zh: {
+                            header: 'E-Booking 会议室预订',
+                            language: '选择语言',
+                            selectRoom: '选择房间',
+                            title: '预订标题',
+                            date: '预订日期',
+                            startTime: '开始时间',
+                            endTime: '结束时间',
+                            equipment: '所需设备',
+                            submit: '提交预订',
+                            pendingApprovals: '查看待批准预订',
+                            days: ['日', '一', '二', '三', '四', '五', '六'],
+                            months: ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月']
+                        }
+                    };
+
+                    this.translations = languages[this.selectedLanguage];
+                },
+                fetchBookings() {
+                    axios.get('get_bookings.php').then(response => {
+                        this.bookings = response.data;
+                        this.updateCalendar();
+                    });
+                },
+                addBooking() {
+                    axios.post('add_booking.php', {
+                        room_id: this.form.room,
+                        title: this.form.title,
+                        booking_date: this.form.date,
+                        start_time: this.form.startTime,
+                        end_time: this.form.endTime,
+                        equipment: this.form.equipment
+                    }).then(() => {
+                        this.message = this.translations.submit + ' สำเร็จ!';
+                        this.messageType = 'success';
+                    }).catch(() => {
+                        this.message = this.translations.submit + ' ล้มเหลว!';
+                        this.messageType = 'error';
+                    });
+                },
+                updateCalendar() {
+                    const daysInMonth = new Date(this.selectedYear, this.selectedMonth + 1, 0).getDate();
+                    this.calendarDays = Array.from({ length: daysInMonth }, (_, i) => {
+                        const date = `${this.selectedYear}-${String(this.selectedMonth + 1).padStart(2, '0')}-${String(i + 1).padStart(2, '0')}`;
+                        return this.bookings.some(b => b.booking_date === date) ? 'unavailable' : 'available';
+                    });
+                },
+                goToPendingApprovals() {
+                    window.location.href = 'pending_approvals.html';
+                }
+            },
+            mounted() {
+                this.changeLanguage();
+                this.fetchBookings();
+            }
+        });
+
+        app.mount('#app');
+    </script>
+</body>
+</html>
